@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Remove.bg Free - 开源免费背景移除</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .drop-zone {
+            transition: all 0.3s ease;
+        }
+        .drop-zone.active {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+        }
+        .loading-spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3b82f6;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <!-- Header -->
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">
+                🎨 Remove.bg Free
+            </h1>
+            <p class="text-gray-600">
+                开源免费背景移除工具 · 完全替代 Remove.bg
+            </p>
+            <div class="mt-4 flex justify-center gap-4 text-sm text-gray-500">
+                <span>✅ 免费</span>
+                <span>✅ 开源</span>
+                <span>✅ 无限制</span>
+                <span>✅ 本地部署</span>
+            </div>
+        </header>
+
+        <!-- Upload Zone -->
+        <div class="bg-white rounded-xl shadow-lg p-8 mb-8">
+            <div 
+                id="dropZone" 
+                class="drop-zone border-2 border-dashed border-gray-300 rounded-lg p-12 text-center cursor-pointer"
+            >
+                <div class="mb-4">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                    </svg>
+                </div>
+                <p class="text-lg text-gray-600 mb-2">
+                    拖拽图片到此处或点击上传
+                </p>
+                <p class="text-sm text-gray-500">
+                    支持 PNG, JPG, WEBP · 自动抠图
+                </p>
+                <input type="file" id="fileInput" class="hidden" accept="image/png,image/jpeg,image/webp">
+            </div>
+
+            <!-- Loading State -->
+            <div id="loading" class="hidden text-center py-8">
+                <div class="loading-spinner mx-auto mb-4"></div>
+                <p class="text-gray-600">正在移除背景...</p>
+            </div>
+
+            <!-- Preview -->
+            <div id="preview" class="hidden mt-8">
+                <h3 class="text-lg font-semibold text-gray-700 mb-4">处理结果</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <p class="text-sm text-gray-600 mb-2">原图</p>
+                        <img id="originalImage" class="w-full rounded-lg shadow-md" alt="原图">
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600 mb-2">抠图后</p>
+                        <img id="processedImage" class="w-full rounded-lg shadow-md bg-checkerboard" alt="处理后">
+                    </div>
+                </div>
+                <div class="mt-6 text-center">
+                    <a 
+                        id="downloadBtn" 
+                        class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-lg transition"
+                    >
+                        ⬇️ 下载 PNG
+                    </a>
+                </div>
+            </div>
+
+            <!-- Error Message -->
+            <div id="error" class="hidden mt-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700"></div>
+        </div>
+
+        <!-- Features -->
+        <div class="bg-white rounded-xl shadow-lg p-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">功能特性</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="text-center">
+                    <div class="text-3xl mb-2">🚀</div>
+                    <h3 class="font-semibold text-gray-700">P0 - 单图处理</h3>
+                    <p class="text-sm text-gray-600 mt-1">拖拽上传，自动抠图，即时下载</p>
+                </div>
+                <div class="text-center">
+                    <div class="text-3xl mb-2">⚡</div>
+                    <h3 class="font-semibold text-gray-700">P1 - 批量处理</h3>
+                    <p class="text-sm text-gray-600 mt-1">最多 10 张图片同时处理</p>
+                </div>
+                <div class="text-center">
+                    <div class="text-3xl mb-2">🔌</div>
+                    <h3 class="font-semibold text-gray-700">P2 - API 接口</h3>
+                    <p class="text-sm text-gray-600 mt-1">RESTful API，轻松集成</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="text-center mt-8 text-gray-500 text-sm">
+            <p>开源项目 · GitHub 即将发布</p>
+            <p class="mt-1">技术栈：FastAPI + rembg (U²-Net) + React + Tailwind</p>
+        </footer>
+    </div>
+
+    <script>
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const loading = document.getElementById('loading');
+        const preview = document.getElementById('preview');
+        const error = document.getElementById('error');
+        const originalImage = document.getElementById('originalImage');
+        const processedImage = document.getElementById('processedImage');
+        const downloadBtn = document.getElementById('downloadBtn');
+
+        let processedBlob = null;
+
+        // 点击上传
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        // 拖拽事件
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('active');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('active');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('active');
+            if (e.dataTransfer.files.length > 0) {
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        async function handleFile(file) {
+            // 重置状态
+            preview.classList.add('hidden');
+            error.classList.add('hidden');
+            loading.classList.remove('hidden');
+
+            // 显示原图预览
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                originalImage.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+
+            // 上传处理
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch('http://localhost:8000/api/remove-bg', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const errData = await response.json();
+                    throw new Error(errData.detail || '处理失败');
+                }
+
+                processedBlob = await response.blob();
+                const url = URL.createObjectURL(processedBlob);
+                processedImage.src = url;
+
+                // 设置下载
+                downloadBtn.href = url;
+                downloadBtn.download = file.name.replace(/\.[^/.]+$/, '') + '_no_bg.png';
+
+                loading.classList.add('hidden');
+                preview.classList.remove('hidden');
+
+            } catch (err) {
+                loading.classList.add('hidden');
+                error.textContent = '错误：' + err.message;
+                error.classList.remove('hidden');
+            }
+        }
+    </script>
+</body>
+</html>
