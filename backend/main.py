@@ -6,7 +6,7 @@ FastAPI + rembg (U²-Net 模型)
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
-from rembg import remove
+from rembg import remove, new_session
 from PIL import Image
 import io
 import logging
@@ -29,19 +29,31 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# 初始化轻量级模型会话 (u2netp - 1.1MB, 速度快)
+session = None
+
+
+@app.on_event("startup")
+async def startup_event():
+    global session
+    logger.info("正在加载 u2netp 模型...")
+    session = new_session(model_name="u2netp")
+    logger.info("模型加载完成")
+
 
 @app.get("/")
 async def root():
     return {
         "message": "Remove.bg Free API",
         "version": "0.1.0",
-        "status": "running"
+        "status": "running",
+        "model": "u2netp (lightweight)"
     }
 
 
 @app.get("/health")
 async def health_check():
-    return {"status": "healthy"}
+    return {"status": "healthy", "model_loaded": session is not None}
 
 
 @app.post("/api/remove-bg")
@@ -64,7 +76,7 @@ async def remove_background(file: UploadFile = File(...)):
         input_image = Image.open(io.BytesIO(image_data))
         
         # 移除背景
-        output_image = remove(input_image)
+        output_image = remove(input_image, session=session)
         
         # 输出为 PNG
         output_buffer = io.BytesIO()
@@ -101,7 +113,7 @@ async def batch_remove_background(files: list[UploadFile] = File(...)):
         try:
             image_data = await file.read()
             input_image = Image.open(io.BytesIO(image_data))
-            output_image = remove(input_image)
+            output_image = remove(input_image, session=session)
             
             output_buffer = io.BytesIO()
             output_image.save(output_buffer, format="PNG")
